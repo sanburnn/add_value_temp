@@ -1,36 +1,39 @@
+import csv
 
-file_path = '/Users/dimas/Downloads/test2.xls'  # Replace with the path to your text file
-
-# Try different encodings to read the file
-encodings_to_try = ['utf-8', 'latin-1', 'utf-16']
-
-lines = None
-for encoding in encodings_to_try:
+def increment_csv_column(csv_file, column_number, increment_value):
     try:
-        with open(file_path, 'r', encoding=encoding) as file:
-            lines = file.readlines()
-        break  # Stop trying encodings if successful
-    except UnicodeDecodeError:
-        pass
+        with open(csv_file, 'r', encoding='utf-16') as file:
+            reader = csv.reader(file, delimiter='\t')
+            rows = list(reader)
 
-if lines is None:
-    raise ValueError("Unable to determine the correct encoding for the file.")
+        with open(csv_file, 'w', newline='', encoding='utf-16') as file:
+            writer = csv.writer(file, delimiter='\t')
 
-# Process the data
-for i in range(1, len(lines)):
-    values = lines[i].split()  # Assuming space or tab as the delimiter
-    if len(values) >= 3:  # Make sure the third column exists
-        try:
-            # Convert the third column value to float and add 0.5
-            values[2] = str(float(values[2]) + 0.5)
-            lines[i] = ' '.join(values)
+            for row in rows:
+                try:
+                    # Attempt to convert the 3rd column value to a float
+                    current_value = float(row[column_number - 1])
+                    # Increment the value by the user-specified increment_value
+                    row[column_number - 1] = str(current_value + increment_value)
+                except ValueError:
+                    # If the conversion to float fails, handle the exception
+                    print(f"Warning: Ignoring non-float value in row {row}")
+                    writer.writerow(row)
+                    continue
 
-        except ValueError:
-            # Handle the case where the value in the third column is not a valid float
-            pass
+                # Write the updated row to the CSV file
+                writer.writerow(row)
 
-# Write the modified data back to the text file
-with open(file_path, 'w', encoding='utf-8') as file:
-    file.writelines(lines)
+    except FileNotFoundError:
+        print("Error: File not found.")
+    except Exception as e:
+        print(f"Error: {e}")
 
-print("0.5 has been added to the values in the third column starting from the second row in the text file.")
+if __name__ == "__main__":
+    csv_file = input("Enter the CSV file path: ")
+    column_number = int(input("Enter the column number to increment (1-indexed): "))
+    increment_value = float(input("Enter the value to increment by: "))
+
+    increment_csv_column(csv_file, column_number, increment_value)
+
+    print("CSV file has been updated.")
